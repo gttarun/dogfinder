@@ -23,6 +23,7 @@ def detail(request, dog_name):
     return HttpResponse("%s NOT FOUND" %dog_name)
 
 def id_detail(request, dog_id):
+    dog_id = int(dog_id)
     all_dogs = Dog.objects.all()
     for dog in all_dogs:
         if dog.id == dog_id:
