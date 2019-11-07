@@ -12,7 +12,7 @@ def index(request):
     all_parks = Park.objects.order_by('name')
     output = []
     for park in all_parks:
-        output.append([park.name, ": ", park.latitude, ", ", park.longitude])
+        output.append([str(park.name), str(park.longitude), str(park.latitude)])
     return HttpResponse(output)
 
 def detail(request, park_name):

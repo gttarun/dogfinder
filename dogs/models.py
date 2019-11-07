@@ -13,8 +13,8 @@ class Dog(models.Model):
 	tail = models.CharField(max_length=20)
 	fur_type = models.CharField(max_length=20)
 	weight = models.IntegerField(default=0)
-	latitude = models.DecimalField(max_digits=9, decimal_places=6)
 	longitude = models.DecimalField(max_digits=9, decimal_places=6)
+	latitude = models.DecimalField(max_digits=9, decimal_places=6)
 	lastupdate = models.DateTimeField()
 
 	def __str__(self):
