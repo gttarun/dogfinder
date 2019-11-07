@@ -43,6 +43,22 @@ def nearby(request):
             output.append([str(dog.name)])
     return HttpResponse(output)
 
+def update(request):
+    name = request.GET.get('name')
+    lon = request.GET.get('lon')
+    lat = request.GET.get('lat')
+    all_dogs = Dog.objects.all()
+    for dog in all_dogs:
+        if dog.name == name:
+            dog.longitude = lon
+            dog.latitude = lat
+            try:
+                dog.save
+                return HttpResponse("SUCCESS")
+            except Exception as e:
+                return HttpResponse(e)
+    return HttpResponse("%s NOT FOUND" %name)
+
 def in_range(clon, clat, lon, lat, r):
     rad = float(0.0175)
     d = (math.acos(math.sin(lat * rad) * math.sin(clat * rad) + math.cos(lat * rad) * math.cos(clat * rad) * math.cos((clon * rad) - (lon * rad))) * r * 1000)
