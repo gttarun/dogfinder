@@ -1,48 +1,39 @@
-# Engineer Candidate Take-Home Assessment
+# DogFinder
 
-## Purpose
+## Challenges/Decisions
 
-The purpose of this assessment is to validate that the candidate can:
+Having worked with Flask framework extensively in the past, I had some trouble adjusting back in Django. 
 
-* Write clear, comprehensible, and extensible code
-* Design and implement Data Models
-* Demonstrate an understanding of Python, Django, and RESTful APIs
-* Communicate clearly about design and architecture decisions
+The project/app structure as well as Django's ORM is much easier to work with. However, I had some trouble with URL dispatching since Flask uses @classmethod decorators to reirect you to the right function/method instead of having a seperate file to manage the redirecting. Additionally, I had to rejog my memory about regex and input params while keeping in mind to support accepting JSON and returning the same as well.
 
-## Project Prompt
+The last challenge was the radius feature. Firstly, I had to do some research in order to understand how to use longitude/latitude as well as perfrom calculations with them. After digging in a little deeper I learned that the calculation will require using the spherical law of cosines due to the Earth being a 3 dimensional sphere object. (Earth is slightly ellipsoidal but using a spherical model the errors are less than 0.3% which is negligabe and thus for most use cases the spherical model will work just fine)
 
-One of the capabilites of the Embold platform is to help our users find the best providers. 
-In order to help another growing market with similar needs, we've decided
-to build a platform for users to find all the best dogs out there. 
+## API Use
 
-You've been tasked with starting the development of Embold's new Dogfinder API.
-Upon first release, the API is expected to have three main capabilites.
-* Returning the location (in latitude and longitude) and details of all dogs, or of just one dog by it's ID.
-    * What details about a dog to include is up to your discretion, an example of some to include would be `name` and `breed`.
-* Returning the location (in latitude and longitude) and details of all registered dog parks
-* Submit a new location for a dog, so that we can keep all of our dog data up to date.
+### Return ALL dogs' location and details
+* GET
+	* /dogs
 
-If time permits, we'd like one extra feature: 
-* Return a list of all dogs inside a given radius from a given latitude, longitude point. 
+### Return a specific dog's location and details
+* GET
+	* /dogs/<dog_id>
+* UPDATE
+	* /dogs/<dog_id>
+		* input: curl --header "Content-Type: application/json" --request PUT --data '{"lon":"30.379753", "lat":"-97.737992"}' http://127.0.0.1:8000/dogs/2/
 
-This assessment should take approximately 4 hours, but feel free to spend more or less time on it.
+### Return all dogs within a radius from a given longitude/latitude
+* GET
+	* /dogs/nearby
+		* input: curl --header "Content-Type: application/json" --request GET --data '{"lon":"30.379753", "lat":"-97.737992", "radius":"10"}' http://127.0.0.1:8000/dogs/nearby/
 
-## Project Deliverables
+### Return all parks location and details
+* GET
+	* /parks
 
-### Hard Requirements
-* Use Python and Django
-* The API must accept and return JSON
+### Return a specific park's location and details
+* GET
+	* /parks/<park_name>
 
-Create a repository on GitHub for your code and share the link with us.  
-(If the Repo is private, share it with 'ebarajas')
 
-In the repository, include the following:
-* A file explaining any decisions you had to make or challenges you overcame.
-* Brief API documentation describing how to use the APIs you've created.
 
-## Bonus Points
 
-We would love to see:
-
-* Git history
-* Production-quality code

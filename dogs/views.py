@@ -51,6 +51,7 @@ def dog_details(request, dog_id):
         return HttpResponse(status=204)
 
 # find all nearby dogs within a radius of a given longitude & latitude
+@csrf_exempt
 def all_nearby(request):
 
     try:
