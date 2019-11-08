@@ -11,7 +11,7 @@ def index(request):
     all_parks = serialize("json", Park.objects.all())
     return HttpResponse(all_parks)
 
-# given a name of park, return details if found
+# given the name of park, return details if found
 def detail(request, park_name):
     output = {'status': 400, 'response': 'park not in database'}
     all_parks = Park.objects.all()
