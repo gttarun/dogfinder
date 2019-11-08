@@ -1,67 +1,73 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from django.shortcuts import render
-from django.http import HttpResponse
-from django.core.serializers import serialize
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.parsers import JSONParser
 from .models import Dog
+from .serializers import DogSerializer
 import math, json
 from datetime import datetime
-from decimal import *
 
 # return all dogs in database
+@csrf_exempt
 def index(request):
-    all_dogs = serialize("json", Dog.objects.all())
-    return HttpResponse(all_dogs)
+    if request.method == 'GET':
+        serializer = DogSerializer(Dog.objects.all(), many=True)
+        return JsonResponse(serializer.data, safe=False)
+    elif request.method == 'POST':
+        data = JSONParser().parse(request)
+        serializer = DogSerializer(dog, data=data)
+        if serializer.is_valid():
+            serializer.data['lastupdated'] = datetime.now()
+            serializer.save()
+            return JsonResponse(serializer.data, status=201, safe=False)
+        return JsonResponse(serializer.errors, status=400)
 
-# given dog_id, return coordinates
-def detail(request, dog_id):
-    dog_id = int(dog_id)
-    output = {'status': 400, 'response': 'dog not in database'}
+
+# Retrieve, update or delete a dog in database.
+@csrf_exempt
+def dog_details(request, dog_id):
     
-    all_dogs = Dog.objects.all()
-    for dog in all_dogs:
-        if dog.id == dog_id:
-            output['status'] = 200
-            output['response'] = "SUCCESS"
-            output['location'] = [str(dog.longitude), str(dog.latitude)]
-            return HttpResponse(json.dumps(output), content_type='application/json')
-    return HttpResponse(json.dumps(output), content_type='application/json')
+    try:
+        dog = Dog.objects.get(pk=dog_id)
+    except Dog.DoesNotExist:
+        return HttpResponse(status=404)
+
+    if request.method == 'GET':
+        serializer = DogSerializer(dog)
+        return JsonResponse(serializer.data)
+
+    elif request.method == 'PUT':
+        data = JSONParser().parse(request)
+        serializer = DogSerializer(dog, data=data)
+        if serializer.is_valid():
+            serializer.data['lastupdated'] = datetime.now()
+            serializer.save()
+            return JsonResponse(serializer.data, safe=False)
+        return JsonResponse(serializer.errors, status=400)
+
+    elif request.method == 'DELETE':
+        dog.delete()
+        return HttpResponse(status=204)
 
 # find all nearby dogs within a radius of a given longitude & latitude
 def all_nearby(request):
-    output = {'status': 400, 'response': 'no dog(s) within distance', 'in_range': {}}
-    clon = float(request.GET.get('clon'))
-    clat = float(request.GET.get('clat'))
-    radius = float(request.GET.get('radius'))
-    all_dogs = Dog.objects.all()
-    for dog in all_dogs:
-        if in_range(clon, clat, dog.longitude, dog.latitude, radius):
-            output['status'] = 200
-            output['response'] = "SUCCESS"
-            output['in_range'][dog.name] = [str(dog.longitude), str(dog.latitude)]
-    return HttpResponse(json.dumps(output), content_type='application/json')
 
-# update location for a given dog (& timestamp when updated)
-def update(request):
-    output = {'status': 400, 'response': 'could NOT be updated'}
-    name = request.GET.get('name')
-    lon = request.GET.get('lon')
-    lat = request.GET.get('lat')
-    all_dogs = Dog.objects.all()
-    for dog in all_dogs:
-        if dog.name == name:
-            dog.longitude = lon
-            dog.latitude = lat
-            dog.lastupdated = datetime.now()
-            try:
-                dog.save()
-                output['status'] = 200
-                output['response'] = 'SUCCESS'
-                return HttpResponse(json.dumps(output), content_type='application/json')
-            except Exception as e:
-                output['details'] = str(e)
-                return HttpResponse(json.dumps(output), content_type='application/json')
-    return HttpResponse(json.dumps(output), content_type='application/json')
+    try:
+        data = json.loads(request.body)
+        lon = float(data['lon'])
+        lat = float(data['lat'])
+        radius = float(data['radius'])
+    except:
+        return HttpResponse(status=204)
+
+    dogs_nearby = []
+    if request.method == 'GET':
+        serializer = DogSerializer(Dog.objects.all(), many=True)
+        for each in serializer.data:
+            if in_range(lon, lat, each['longitude'], each['latitude'], radius):
+                dogs_nearby.append(each)
+        return JsonResponse(dogs_nearby, status=200, safe=False)
 
 # spherical law of cosines to figure out distance from given coordinates (in radians) within a certain radius (in miles)
 def in_range(clon, clat, lon, lat, r):

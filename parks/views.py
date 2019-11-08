@@ -1,24 +1,46 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.parsers import JSONParser
 from .models import Park
-import json
-from django.core.serializers import serialize
+from .serializers import ParkSerializer
 
-# return all parks
+# return all parks in database
+@csrf_exempt
 def index(request):
-    all_parks = serialize("json", Park.objects.all())
-    return HttpResponse(all_parks)
+    if request.method == 'GET':
+        serializer = ParkSerializer(Park.objects.all(), many=True)
+        return JsonResponse(serializer.data, safe=False)
+    elif request.method == 'POST':
+        data = JSONParser().parse(request)
+        serializer = ParkSerializer(park, data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data, status=201, safe=False)
+        return JsonResponse(serializer.errors, status=400)
 
-# given the name of park, return details if found
-def detail(request, park_name):
-    output = {'status': 400, 'response': 'park not in database'}
-    all_parks = Park.objects.all()
-    for park in all_parks:
-        if park.name.lower() == park_name.lower():
-            output['status'] = 200
-            output['response'] = "SUCCESS"
-            output['location'] = str(park.longitude) + ", " + str(park.latitude)
-            return HttpResponse(json.dumps(output), content_type='application/json')
-    return HttpResponse(json.dumps(output), content_type='application/json')
+
+# Retrieve, update or delete a park in database
+@csrf_exempt
+def park_details(request, park_name):
+    try:
+        park = Park.objects.get(name=park_name)
+    except Park.DoesNotExist:
+        return HttpResponse(status=404)
+
+    if request.method == 'GET':
+        serializer = ParkSerializer(park)
+        return JsonResponse(serializer.data)
+
+    elif request.method == 'PUT':
+        data = JSONParser().parse(request)
+        serializer = ParkSerializer(park, data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data, safe=False)
+        return JsonResponse(serializer.errors, status=400)
+
+    elif request.method == 'DELETE':
+        park.delete()
+        return HttpResponse(status=204)
